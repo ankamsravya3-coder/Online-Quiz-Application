@@ -33,6 +33,10 @@ const questions = [
 
 let currentQuestion = 0;
 let score = 0;
+let userName = "";
+let userEmail = "";
+
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxnqigrC9O0BRgglHGdEEAijGi6gnNdZwobh4-GlZIL-srn6a38Ah40bmCRh3GzTKfCNg/exec";
 
 const questionNumber = document.getElementById("question-number");
 const questionElement = document.getElementById("question");
@@ -40,7 +44,30 @@ const optionsElement = document.getElementById("options");
 const nextButton = document.getElementById("next-btn");
 const scoreElement = document.getElementById("score");
 
+const userDetails = document.getElementById("user-details");
+const quiz = document.getElementById("quiz");
+const startButton = document.getElementById("start-btn");
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+
+startButton.onclick = function () {
+
+    userName = nameInput.value.trim();
+    userEmail = emailInput.value.trim();
+
+    if (userName === "" || userEmail === "") {
+        alert("Please enter your name and email.");
+        return;
+    }
+
+    userDetails.style.display = "none";
+    quiz.style.display = "block";
+
+    showQuestion();
+};
+
 function showQuestion() {
+
     const question = questions[currentQuestion];
 
     questionNumber.textContent =
@@ -51,6 +78,7 @@ function showQuestion() {
     optionsElement.innerHTML = "";
 
     question.options.forEach(option => {
+
         const button = document.createElement("button");
 
         button.textContent = option;
@@ -71,11 +99,13 @@ function checkAnswer(selectedAnswer, selectedButton) {
     const allButtons = optionsElement.querySelectorAll("button");
 
     allButtons.forEach(button => {
+
         button.disabled = true;
 
         if (button.textContent === correctAnswer) {
             button.style.background = "#90EE90";
         }
+
     });
 
     if (selectedAnswer === correctAnswer) {
@@ -92,8 +122,11 @@ nextButton.onclick = function () {
     currentQuestion++;
 
     if (currentQuestion < questions.length) {
+
         showQuestion();
+
     } else {
+
         questionNumber.textContent = "Quiz Completed!";
         questionElement.textContent = "🎉 Well Done!";
         optionsElement.innerHTML = "";
@@ -102,7 +135,23 @@ nextButton.onclick = function () {
 
         scoreElement.textContent =
             "Your Score: " + score + " / " + questions.length;
+
+        // Send response to Google Sheets
+        const formData = new URLSearchParams();
+
+        formData.append("name", userName);
+        formData.append("email", userEmail);
+        formData.append("score", score + " / " + questions.length);
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            body: formData
+        })
+        .then(() => {
+            console.log("Response submitted successfully.");
+        })
+        .catch(error => {
+            console.log("Error submitting response:", error);
+        });
     }
 };
-
-showQuestion();
